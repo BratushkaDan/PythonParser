@@ -1,0 +1,1 @@
+{"pos": 6, "ask_position_on_every_start": true}
