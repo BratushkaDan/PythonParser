@@ -28,8 +28,9 @@ def begin_writing_from(position):
                 value = table[current_position][i:].replace("\"", "")
                 semicolon_position = re.search(";", value).span()[0]
                 # value = value.replace(",", "") # replaces all commas with blank space
-                value = value.replace(";", "")
-                value = value[:semicolon_position] + "," + value[semicolon_position:]
+                value = value.replace(";", ",") # remove that
+                print(value[semicolon_position])
+                value = value[:semicolon_position] + "\t" + value[semicolon_position+1:]
                 # print(value[:semicolon_position]) # prints first word!
                 value = re.sub(r"\(.*?\)", "", value)
                 ten = re.search(r"10\)", value)
@@ -40,9 +41,10 @@ def begin_writing_from(position):
                 result.append(value)
                 break
 
-    f = open("AnkiDeck.csv", "w")
+    f = open("AnkiDeck.tsv", "w")
     for line in result:
-        print(line)
+        # print(line)
         # line = re.sub(r"\d\)", "", line)
         f.writelines(line + "\n")
     f.close()
+begin_writing_from(0)
