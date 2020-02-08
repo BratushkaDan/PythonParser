@@ -8,12 +8,13 @@ def cls():
 
 
 def start():
-    contents = open("cfg.txt", "r").readline()
+    cls()
+    contents = open("cfg.txt", "r", encoding="utf-8").readline()
     try:
         config = json.loads(contents)
     except json.JSONDecodeError:
         write_to_config()
-    contents = open("cfg.txt", "r").readline()
+    contents = open("cfg.txt", "r", encoding="utf-8").readline()
     config = json.loads(contents)
     print("Текущая позиция - " + str(config["pos"]) + ". Слово - " + find_word_at_position(int(config["pos"])) + ".")
     if config["ask_position_on_every_start"]:
@@ -30,6 +31,7 @@ def start():
                     pos = int(input("Введите номер позиции: "))
                 except ValueError:
                     pass
+            cls()
             ask = input("Спрашивать позицию впоследствии?\n").lower()
             while not (ask == "нет" or ask == "да"):
                 cls()
@@ -37,24 +39,25 @@ def start():
             ask = True if ask == "да" else False
         else:
             pos = config["pos"]
+        cls()
         write_to_config(pos)
-    begin_writing_from(json.loads(open("cfg.txt", "r").readline())["pos"])
+    begin_writing_from(json.loads(open("cfg.txt", "r", encoding="utf-8").readline())["pos"])
 
 
 def write_to_config(pos=1):
     ask = True
     try:
-        ask = json.loads(open("cfg.txt", "r").readline())["ask_position_on_every_start"]
+        ask = json.loads(open("cfg.txt", "r", encoding="utf-8").readline())["ask_position_on_every_start"]
     except json.JSONDecodeError:
         pass
-    f = open("cfg.txt", "w")
+    f = open("cfg.txt", "w", encoding="utf-8")
     d = {"pos": pos, "ask_position_on_every_start": ask}
     f.write(json.dumps(d))
     f.close()
 
 
 def find_word_at_position(pos):
-    table = open("table.csv", "r")
+    table = open("table.csv", "r", encoding="utf-8")
     for i, line in enumerate(table):
         if i + 1 == pos:
             res = re.search(r";[\w;][^\d;]+", line)
@@ -89,23 +92,32 @@ def request_for_translations(data, line_num):
     initial_translations = data["translations"]
     data["translations"] = []
 
-    print(data["word"], end=": \n")
-    for tr_idx in range(len(initial_translations)):
-        if (tr_idx + 1) % 5 == 0:
-            print(str(tr_idx + 1) + ". " + initial_translations[tr_idx])
-        else:
-            print(str(tr_idx + 1) + ". " + initial_translations[tr_idx], end=" ")
-    user_input = list(map(int, input("\n\nВведите номера необходимых переводов: ").split()))
-    if tr_idx + 1 == len(initial_translations):
-        cls()
+    out_of_range_index_is_present = True
+    while out_of_range_index_is_present:
+        print(data["word"], end=": \n")
+        for tr_idx in range(len(initial_translations)):
+            if (tr_idx + 1) % 5 == 0:
+                print(str(tr_idx + 1) + ". " + initial_translations[tr_idx])
+            else:
+                print(str(tr_idx + 1) + ". " + initial_translations[tr_idx], end=" ")
+        print("\n")
+        out_of_range_index_is_present = False
+        user_input = list(map(int, input("Введите номера необходимых переводов: ").split()))
+        for idx in user_input:
+            if idx > len(initial_translations) or idx == 0:
+                cls()
+                out_of_range_index_is_present = True
+                break
 
+    cls()
     for index in user_input:
         data["translations"].append(initial_translations[index - 1])
     write_to_file(data, line_num)
 
 
 def write_to_file(data, line_num):
-    f = open("AnkiDeck.tsv", "a")
+    num = line_num // 100 + 1
+    f = open("AnkiDeck{}.tsv".format(num), "a", encoding="utf-8")
     f.write(numerate_list(data["translations"]) + "\t" + data["word"] + "\n")
     f.close()
     write_to_config(line_num + 1)
@@ -115,14 +127,13 @@ def numerate_list(translations):
     string = ""
     for i in range(len(translations)):
         if len(translations) == 1:
-            print(translations)
             return translations[i]
         string += str(i + 1) + ". {}".format(translations[i]) + " "
     return string
 
 
 def begin_writing_from(position):
-    table = open("table.csv", "r").read().splitlines()
+    table = open("table.csv", "r", encoding="utf-8").read().splitlines()
     for current_position in range(position - 1, len(table)):
         for i in range(len(table[current_position])):
             if re.match("[a-zA-Z]", table[current_position][i]):
@@ -140,4 +151,8 @@ def begin_writing_from(position):
                 break
 
 
-start()
+try:
+    start()
+except:
+    cls()
+    print("Interrupted.")
