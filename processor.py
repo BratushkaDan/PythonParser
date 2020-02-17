@@ -1,6 +1,7 @@
 import re
 import json
 import os
+import sys
 
 
 def cls():
@@ -8,56 +9,61 @@ def cls():
 
 
 def start():
-    cls()
-    contents = open("cfg.txt", "r", encoding="utf-8").readline()
     try:
-        config = json.loads(contents)
+        if not (sys.argv[1]):
+            cls()
+            print("Введите валидное имя файла")
+            return
+    except IndexError:
+        cls()
+        print("Введите валидное имя файла")
+        return
+    try:
+        os.mkdir(os.getcwd() + "/decks")
+    except FileExistsError:
+        pass
+    contents = ""
+    try:
+        contents = open("cfg.txt", "r", encoding="utf-8").readline()
+    except FileNotFoundError:
+        open("cfg.txt", "w+", encoding="utf-8")
+    try:
+        json.loads(contents)
     except json.JSONDecodeError:
         write_to_config()
     contents = open("cfg.txt", "r", encoding="utf-8").readline()
     config = json.loads(contents)
     print("Текущая позиция - " + str(config["pos"]) + ". Слово - " + find_word_at_position(int(config["pos"])) + ".")
-    if config["ask_position_on_every_start"]:
-        pos = input("Изменить позицию? (Да/нет)\n").lower()
-        ask = config["ask_position_on_every_start"]
-        while not (pos == "нет" or pos == "да"):
-            cls()
-            pos = input("Изменить позицию? (Да/нет)\n").lower()
-        if pos == "да":
-            pos = ""
-            while not (type(pos) == int and find_word_at_position(pos)):
-                try:
-                    cls()
-                    pos = int(input("Введите номер позиции: "))
-                except ValueError:
-                    pass
-            cls()
-            ask = input("Спрашивать позицию впоследствии?\n").lower()
-            while not (ask == "нет" or ask == "да"):
-                cls()
-                ask = input("Спрашивать позицию впоследствии?\n").lower()
-            ask = True if ask == "да" else False
-        else:
-            pos = config["pos"]
+    pos = input("Изменить позицию? (Да/нет)\n").lower()
+    while not (pos == "нет" or pos == "да"):
         cls()
-        write_to_config(pos)
+        pos = input("Изменить позицию? (Да/нет)\n").lower()
+    if pos == "да":
+        pos = ""
+        while not (type(pos) == int and find_word_at_position(pos)):
+            try:
+                cls()
+                pos = int(input("Введите номер позиции: "))
+            except ValueError:
+                pass
+        cls()
+    else:
+        pos = config["pos"]
+    cls()
+    write_to_config(pos)
     begin_writing_from(json.loads(open("cfg.txt", "r", encoding="utf-8").readline())["pos"])
 
 
 def write_to_config(pos=1):
-    ask = True
-    try:
-        ask = json.loads(open("cfg.txt", "r", encoding="utf-8").readline())["ask_position_on_every_start"]
-    except json.JSONDecodeError:
-        pass
     f = open("cfg.txt", "w", encoding="utf-8")
-    d = {"pos": pos, "ask_position_on_every_start": ask}
+    d = {"pos": pos}
     f.write(json.dumps(d))
     f.close()
 
 
 def find_word_at_position(pos):
-    table = open("table.csv", "r", encoding="utf-8")
+    table = open(sys.argv[1], "r", encoding="utf-8").read().splitlines()
+    table.reverse()
     for i, line in enumerate(table):
         if i + 1 == pos:
             res = re.search(r";[\w;][^\d;]+", line)
@@ -94,7 +100,7 @@ def request_for_translations(data, line_num):
 
     out_of_range_index_is_present = True
     while out_of_range_index_is_present:
-        print(data["word"], end=": \n")
+        print(data["word"], ": ", sep="")
         for tr_idx in range(len(initial_translations)):
             if (tr_idx + 1) % 5 == 0:
                 print(str(tr_idx + 1) + ". " + initial_translations[tr_idx])
@@ -117,7 +123,7 @@ def request_for_translations(data, line_num):
 
 def write_to_file(data, line_num):
     num = line_num // 100 + 1
-    f = open("AnkiDeck{}.tsv".format(num), "a", encoding="utf-8")
+    f = open("decks/AnkiDeck{}.tsv".format(num), "a", encoding="utf-8")
     f.write(numerate_list(data["translations"]) + "\t" + data["word"] + "\n")
     f.close()
     write_to_config(line_num + 1)
@@ -133,7 +139,8 @@ def numerate_list(translations):
 
 
 def begin_writing_from(position):
-    table = open("table.csv", "r", encoding="utf-8").read().splitlines()
+    table = open(sys.argv[1], "r", encoding="utf-8").read().splitlines()
+    table.reverse()
     for current_position in range(position - 1, len(table)):
         for i in range(len(table[current_position])):
             if re.match("[a-zA-Z]", table[current_position][i]):
@@ -142,7 +149,7 @@ def begin_writing_from(position):
                 value = value.replace(";", ",")
                 value = value[:semicolon_position] + "" + value[semicolon_position + 1:]
                 value = re.sub(r"\(.*?\)", "", value)
-                ten = re.search(r"10\)", value)
+                ten = re.search(r"15\)", value)
                 if ten:
                     index_ten_begins = ten.span()[0] - 1
                     value = value[0:index_ten_begins]
@@ -151,8 +158,10 @@ def begin_writing_from(position):
                 break
 
 
-try:
-    start()
-except:
-    cls()
-    print("Interrupted.")
+#
+# try:
+#     start()
+# except:
+#     # cls()
+#     print("Interrupted.")
+start()
