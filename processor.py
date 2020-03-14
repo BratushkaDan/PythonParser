@@ -35,10 +35,10 @@ def start():
     config = json.loads(contents)
     print("Текущая позиция - " + str(config["pos"]) + ". Слово - " + find_word_at_position(int(config["pos"])) + ".")
     pos = input("Изменить позицию? (Да/нет)\n").lower()
-    while not (pos == "нет" or pos == "да"):
+    while not (pos in ['нет', 'да', 'no', 'yes', 'n', 'y']):
         cls()
         pos = input("Изменить позицию? (Да/нет)\n").lower()
-    if pos == "да":
+    if pos in ['да', 'yes', 'y']:
         pos = ""
         while not (type(pos) == int and find_word_at_position(pos)):
             try:
