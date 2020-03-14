@@ -111,7 +111,7 @@ def request_for_translations(data, line_num):
         out_of_range_index_is_present = False
         user_input = list(map(int, input("Введите номера необходимых переводов: ").split()))
         for idx in user_input:
-            if idx > len(initial_translations) or idx == 0:
+            if idx > len(initial_translations) or idx < 0:
                 cls()
                 out_of_range_index_is_present = True
                 break
@@ -119,7 +119,8 @@ def request_for_translations(data, line_num):
     cls()
     for index in user_input:
         data["translations"].append(initial_translations[index - 1])
-    write_to_file(data, line_num)
+    if not index == 0:
+        write_to_file(data, line_num)
 
 
 def write_to_file(data, line_num):
