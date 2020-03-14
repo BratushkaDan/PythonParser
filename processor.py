@@ -100,6 +100,7 @@ def request_for_translations(data, line_num):
 
     out_of_range_index_is_present = True
     while out_of_range_index_is_present:
+        cls()
         print(data["word"], ": ", sep="")
         for tr_idx in range(len(initial_translations)):
             if (tr_idx + 1) % 5 == 0:
